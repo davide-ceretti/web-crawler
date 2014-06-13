@@ -1,5 +1,4 @@
-from crawler import Crawler
+from .core import crawl
 
 if __name__ == '__main__':
-    print 'Crawling'
-    Crawler()
+    pass

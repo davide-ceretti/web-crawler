@@ -37,17 +37,21 @@ System requirements
 
 * Python 2.7
 
+Installation
+------------
+
+```pip install -r requirements.txt```
 
 Run
 ---
 
 From the directory that contains this README.md:
 
-* ```python crawler --help```
-* ```python crawler <domain> > output.xml```
+* ```python -m crawler```
+* ```python -m crawler <domain> > sitemap.xml```
 
 
 Tests
 -----
 
-```python crawler/tests.py```
+```python -m crawler.tests```

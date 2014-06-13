@@ -1,2 +1,0 @@
-class Crawler(object):
-    pass
