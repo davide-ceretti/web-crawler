@@ -130,5 +130,57 @@ class TestParse(unittest.TestCase):
 
         self.assertSetEqual(result, expected)
 
+    def test_a_tag_relative_path_initial_slash(self, requests):
+        content = """
+            <a href='/about'>About</a>
+        """
+
+        response = mock.Mock(spec=Response, status_code=200, content=content)
+        requests.get.return_value = response
+
+        result = self.crawler.parse('http://www.google.com')
+        expected = {'http://www.google.com/about'}
+
+        self.assertSetEqual(result, expected)
+
+    def test_a_tag_relative_path_no_initial_slash(self, requests):
+        content = """
+            <a href='about'>About</a>
+        """
+
+        response = mock.Mock(spec=Response, status_code=200, content=content)
+        requests.get.return_value = response
+
+        result = self.crawler.parse('http://www.google.com')
+        expected = {'http://www.google.com/about'}
+
+        self.assertSetEqual(result, expected)
+
+    def test_a_tag_additional_attributes(self, requests):
+        content = """
+            <a class="red" href='about' attr="123">About</a>
+        """
+
+        response = mock.Mock(spec=Response, status_code=200, content=content)
+        requests.get.return_value = response
+
+        result = self.crawler.parse('http://www.google.com')
+        expected = {'http://www.google.com/about'}
+
+        self.assertSetEqual(result, expected)
+
+    def test_a_tag_upper_case(self, requests):
+        content = """
+            <A HREF='about'>About</a>
+        """
+
+        response = mock.Mock(spec=Response, status_code=200, content=content)
+        requests.get.return_value = response
+
+        result = self.crawler.parse('http://www.google.com')
+        expected = {'http://www.google.com/about'}
+
+        self.assertSetEqual(result, expected)
+
 if __name__ == '__main__':
     unittest.main()

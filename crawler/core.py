@@ -1,5 +1,6 @@
 import requests
 import re
+from urlparse import urljoin
 
 from .exceptions import Not200Error
 
@@ -13,9 +14,15 @@ class Crawler(object):
         Whether the given url links to a different page
         of the same domain or not
         """
+        starts_with_http = url.startswith('http')
         internal_domain = url.startswith(self.domain)
         new_page = not url.startswith('#')
-        return internal_domain and new_page
+        return not (starts_with_http and not internal_domain) and new_page
+
+    def _absolute_url(self, url):
+        if url.startswith('http'):
+            return url
+        return urljoin(self.domain, url)
 
     def parse(self, url):
         """
@@ -27,6 +34,10 @@ class Crawler(object):
         response = requests.get(url)
         if not response.status_code == 200:
             raise Not200Error
-        regex = '<a [^>]*href="?\'?([^"\'>]+)"?\'?>(?:.*?)</a>'
-        regex_result = re.findall(regex, response.content)
-        return {each for each in regex_result if self._catch_url(each)}
+        regex = '<a [^>]*href="?\'?([^"\'>]+)"?\'?[^>]*>(?:.*?)</a>'
+        regex_result = re.findall(regex, response.content, re.IGNORECASE)
+        sanitizied_results = {
+            self._absolute_url(each) for each in regex_result
+            if self._catch_url(each)
+        }
+        return sanitizied_results
