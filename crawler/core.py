@@ -1,6 +1,7 @@
 import requests
 import re
-from lxml import etree
+import xml.etree.cElementTree as ET
+from xml.dom import minidom
 from urlparse import urljoin
 
 
@@ -29,6 +30,7 @@ class Crawler(object):
         and return the absolute version of that url
         (e.g. http://www.google.com/about)
         """
+        url = url if not url.endswith('/') else url[:-1]
         if url.startswith('http'):
             return url
         return urljoin(self.domain, url)
@@ -64,7 +66,7 @@ class Crawler(object):
             try:
                 links = self.parse(url)
             except Exception:
-                print 'Invalid URL (skipped): {}'.format(url)
+                # TODO: Logging
                 links = []
 
             visited_urls[url] = links
@@ -82,16 +84,17 @@ class Crawler(object):
         """
         Generates a site map given some data
         """
-        urlset = etree.Element('urlset')
+        urlset = ET.Element('urlset')
+        urlset.set('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
         for url in data:
-            url_node = etree.Element('url')
-            loc = etree.Element('loc')
+            url_node = ET.SubElement(urlset, 'url')
+            loc = ET.SubElement(url_node, 'loc')
             loc.text = url
-            url_node.append(loc)
-            urlset.append(url_node)
-
-        s = etree.tostring(urlset, pretty_print=True)
-        print s
+            priority = ET.SubElement(url_node, 'priority')
+            priority.text = '0'
+        tree = ET.tostring(urlset, 'utf-8')
+        reparsed = minidom.parseString(tree)
+        print reparsed.toprettyxml()
 
     def main(self):
         crawl_dict = self.crawl()
