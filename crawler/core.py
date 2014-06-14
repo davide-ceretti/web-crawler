@@ -20,6 +20,11 @@ class Crawler(object):
         return not (starts_with_http and not internal_domain) and new_page
 
     def _absolute_url(self, url):
+        """
+        Take an url (e.g. about or /about or http://www.google.com/about)
+        and return the absolute version of that url
+        (e.g. http://www.google.com/about)
+        """
         if url.startswith('http'):
             return url
         return urljoin(self.domain, url)
@@ -29,11 +34,8 @@ class Crawler(object):
         Fetch the given url and return all the links inside the <a> tags.
         Links to other domains or to subdomains other than www
         are excluded.
-        If the response is the not 200 raises Not200Error.
         """
         response = requests.get(url)
-        if not response.status_code == 200:
-            raise Not200Error
         regex = '<a [^>]*href="?\'?([^"\'>]+)"?\'?[^>]*>(?:.*?)</a>'
         regex_result = re.findall(regex, response.content, re.IGNORECASE)
         sanitizied_results = {

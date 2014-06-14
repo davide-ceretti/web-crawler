@@ -3,19 +3,12 @@ import mock
 from requests.models import Response
 
 from .core import Crawler
-from .exceptions import Not200Error
 
 
 @mock.patch('crawler.core.requests')
 class TestParse(unittest.TestCase):
     def setUp(self):
         self.crawler = Crawler('http://www.google.com')
-
-    def test_not_200(self, requests):
-        response = mock.Mock(spec=Response, status_code=404)
-        requests.get.return_value = response
-        with self.assertRaises(Not200Error):
-            self.crawler.parse('http://www.google.com')
 
     def test_empty_content(self, requests):
         response = mock.Mock(spec=Response, status_code=200, content='')
