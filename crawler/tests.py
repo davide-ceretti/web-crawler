@@ -175,5 +175,112 @@ class TestParse(unittest.TestCase):
 
         self.assertSetEqual(result, expected)
 
+    def test_a_tag_mailto(self, requests):
+        content = """
+            <a href='mailto:admin@localhost.com'>Mail</a>
+        """
+
+        response = mock.Mock(spec=Response, status_code=200, content=content)
+        requests.get.return_value = response
+
+        result = self.crawler.parse('http://www.google.com')
+
+        self.assertSetEqual(result, set())
+
+    def test_a_tag_javascript(self, requests):
+        content = """
+            <a href='javascript:void(0)'>Javascript</a>
+        """
+
+        response = mock.Mock(spec=Response, status_code=200, content=content)
+        requests.get.return_value = response
+
+        result = self.crawler.parse('http://www.google.com')
+
+        self.assertSetEqual(result, set())
+
+
+@mock.patch.object(Crawler, 'parse')
+class TestCrawl(unittest.TestCase):
+    maxDiff = None
+
+    def setUp(self):
+        self.crawler = Crawler('http://www.google.com')
+
+    def test_one_page_no_link(self, parse):
+        parse.return_value = {'http://www.google.com'}
+
+        result = self.crawler.crawl()
+        expected = {
+            'http://www.google.com': {'http://www.google.com'},
+        }
+
+        self.assertEqual(result, expected)
+
+    def test_two_pages_two_links_each_page(self, parse):
+        parse.side_effect = [
+            {'http://www.google.com', 'http://www.google.com/about'},
+            {'http://www.google.com', 'http://www.google.com/about'},
+        ]
+
+        result = self.crawler.crawl()
+        expected = {
+            'http://www.google.com': {
+                'http://www.google.com',
+                'http://www.google.com/about',
+            },
+            'http://www.google.com/about': {
+                'http://www.google.com',
+                'http://www.google.com/about',
+            }
+        }
+
+        self.assertEqual(result, expected)
+
+    def test_max_iterations(self, parse):
+        self.crawler.MAX_ITERATIONS = 3
+        parse.side_effect = [
+            {'http://www.google.com/a'},
+            {'http://www.google.com/b'},
+            {'http://www.google.com/c'},
+            {'http://www.google.com/d'},
+            {'http://www.google.com/e'},
+        ]
+
+        result = self.crawler.crawl()
+        expected = {
+            'http://www.google.com': {'http://www.google.com/a'},
+            'http://www.google.com/a': {'http://www.google.com/b'},
+            'http://www.google.com/b': {'http://www.google.com/c'},
+        }
+
+        self.assertEqual(result, expected)
+
+    def test_all_links_crawled(self, parse):
+        parse.side_effect = [
+            {'http://www.google.com/a', 'http://www.google.com/a'},
+            {'http://www.google.com/b', 'http://www.google.com/c'},
+            {'http://www.google.com/d', 'http://www.google.com/e'},
+            {'http://www.google.com/f', 'http://www.google.com/a'},
+            {'http://www.google.com/b', 'http://www.google.com/a'},
+            {'http://www.google.com/c'},
+            {'http://www.google.com/b'},
+        ]
+
+        result = self.crawler.crawl()
+        expected_keys = {
+            'http://www.google.com',
+            'http://www.google.com/a',
+            'http://www.google.com/b',
+            'http://www.google.com/c',
+            'http://www.google.com/d',
+            'http://www.google.com/e',
+            'http://www.google.com/f',
+        }
+
+        self.assertEqual(set(result.keys()), expected_keys)
+        self.assertEqual(len(result.keys()), len(expected_keys))
+
+
 if __name__ == '__main__':
     unittest.main()

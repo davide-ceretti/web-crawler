@@ -2,14 +2,14 @@ import requests
 import re
 from urlparse import urljoin
 
-from .exceptions import Not200Error
-
 
 class Crawler(object):
+    MAX_ITERATIONS = 500
+
     def __init__(self, domain):
         self.domain = domain
 
-    def _catch_url(self, url):
+    def _is_valid_url(self, url):
         """
         Whether the given url links to a different page
         of the same domain or not
@@ -17,7 +17,10 @@ class Crawler(object):
         starts_with_http = url.startswith('http')
         internal_domain = url.startswith(self.domain)
         new_page = not url.startswith('#')
-        return not (starts_with_http and not internal_domain) and new_page
+        is_not_mailto = not url.startswith('mailto:')
+        is_not_javascript = not url.startswith('javascript:')
+        return not (starts_with_http and not internal_domain) and new_page \
+            and is_not_mailto and is_not_javascript
 
     def _absolute_url(self, url):
         """
@@ -40,6 +43,33 @@ class Crawler(object):
         regex_result = re.findall(regex, response.content, re.IGNORECASE)
         sanitizied_results = {
             self._absolute_url(each) for each in regex_result
-            if self._catch_url(each)
+            if self._is_valid_url(each)
         }
         return sanitizied_results
+
+    def crawl(self):
+        """
+        Crawl the intere website starting from the given domain.
+        Returns a dictionary with visited url as keys and a set of links
+        contained in the given visited url as values
+        """
+        i = 0
+        visited_urls = {}
+        to_be_visited_urls = {self.domain}
+        while to_be_visited_urls and i < self.MAX_ITERATIONS:
+            i += 1
+            url = to_be_visited_urls.pop()
+
+            try:
+                links = self.parse(url)
+            except Exception:
+                print 'Invalid URL (skipped): {}'.format(url)
+                links = []
+
+            visited_urls[url] = links
+
+            for link in links:
+                if link not in visited_urls.iterkeys():
+                    to_be_visited_urls.add(link)
+
+        return visited_urls
