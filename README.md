@@ -33,6 +33,8 @@ Example Output
 </urlset>
 ```
 
+No 3rd party libraries are allowed for the main functionality (web­crawling, html parsing, writing XML).
+
 System requirements
 -------------------
 
