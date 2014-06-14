@@ -1,5 +1,6 @@
 import requests
 import re
+from lxml import etree
 from urlparse import urljoin
 
 
@@ -73,3 +74,26 @@ class Crawler(object):
                     to_be_visited_urls.add(link)
 
         return visited_urls
+
+    def get_xml_data(self, crawl_dict):
+        return crawl_dict.iterkeys()
+
+    def generate_site_map(self, data):
+        """
+        Generates a site map given some data
+        """
+        urlset = etree.Element('urlset')
+        for url in data:
+            url_node = etree.Element('url')
+            loc = etree.Element('loc')
+            loc.text = url
+            url_node.append(loc)
+            urlset.append(url_node)
+
+        s = etree.tostring(urlset, pretty_print=True)
+        print s
+
+    def main(self):
+        crawl_dict = self.crawl()
+        xml_data = self.get_xml_data(crawl_dict)
+        self.generate_site_map(xml_data)
