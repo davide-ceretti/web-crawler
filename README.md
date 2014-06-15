@@ -50,9 +50,12 @@ Run
 
 From the directory that contains this README.md:
 
-* ```python -m crawler```
+* ```python -m crawler --help```
 * ```python -m crawler <domain> > sitemap.xml```
 
+Example:
+
+```python -m crawler http://proxybay.info/ > /tmp/sitemap.xml```
 
 Tests
 -----
