@@ -1,3 +1,7 @@
+[![Alt text](https://api.travis-ci.org/davide-ceretti/interview-crawler.svg?branch=master)](https://travis-ci.org/davide-ceretti/interview-crawler)
+[![Alt text](http://coveralls.io/repos/davide-ceretti/interview-crawler/badge.png?branch=master)](https://coveralls.io/r/davide-ceretti/interview-crawler)
+
+
 Assignment
 ----------
 
