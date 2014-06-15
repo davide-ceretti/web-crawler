@@ -1,3 +1,5 @@
+from __future__ import division
+
 import requests
 import re
 import xml.etree.cElementTree as ET
@@ -78,25 +80,37 @@ class Crawler(object):
         return visited_urls
 
     def get_xml_data(self, crawl_dict):
-        return crawl_dict.iterkeys()
+        """
+        Get a dictionary with visited url as keys and a set of links
+        contained in the given visited url as values and yield
+        url, priority tuples
+        """
+        total_links = sum(len(values) for values in crawl_dict.itervalues())
+        for key in crawl_dict:
+            priority = sum(
+                1 for values in crawl_dict.itervalues() if key in values
+            )/total_links if total_links else 1
+            yield (key, priority)
 
     def generate_site_map(self, data):
         """
-        Generates a site map given some data
+        Generates a site map given urls and priorities
+        order by priority
         """
         urlset = ET.Element('urlset')
         urlset.set('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9')
-        for url in data:
+        sorted_data = sorted(data, key=lambda x: x[1], reverse=True)
+        for url, priority in sorted_data:
             url_node = ET.SubElement(urlset, 'url')
-            loc = ET.SubElement(url_node, 'loc')
-            loc.text = url
-            priority = ET.SubElement(url_node, 'priority')
-            priority.text = '0'
+            loc_node = ET.SubElement(url_node, 'loc')
+            loc_node.text = url
+            priority_node = ET.SubElement(url_node, 'priority')
+            priority_node.text = "{0:.2f}".format(priority)
         tree = ET.tostring(urlset, 'utf-8')
         reparsed = minidom.parseString(tree)
-        print reparsed.toprettyxml()
+        return reparsed.toprettyxml(indent='    ')
 
     def main(self):
         crawl_dict = self.crawl()
         xml_data = self.get_xml_data(crawl_dict)
-        self.generate_site_map(xml_data)
+        print self.generate_site_map(xml_data)

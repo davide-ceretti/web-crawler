@@ -295,5 +295,85 @@ class TestCrawl(unittest.TestCase):
         self.assertEqual(len(result.keys()), len(expected_keys))
 
 
+class TestGenerateXMLData(unittest.TestCase):
+    def setUp(self):
+        self.crawler = Crawler('one')
+
+    def test_no_links(self):
+        crawl_dit = {
+            'one': set(),
+        }
+
+        data = self.crawler.get_xml_data(crawl_dit)
+        expected = set([
+            ('one', 1),
+        ])
+
+        self.assertSetEqual(set(data), expected)
+
+    def test_multiple_links(self):
+        crawl_dit = {
+            'one': {'one', 'two', 'three', 'five'},
+            'two': {'one', 'five'},
+            'three': {'one', 'four'},
+            'four': {'one', 'three'},
+            'five': set(),
+        }
+
+        data = self.crawler.get_xml_data(crawl_dit)
+        expected = set([
+            ('one', 0.40),
+            ('two', 0.10),
+            ('three', 0.20),
+            ('four', 0.10),
+            ('five', 0.20),
+        ])
+
+        self.assertSetEqual(set(data), expected)
+
+
+class TestGenerateSiteMap(unittest.TestCase):
+    def setUp(self):
+        self.crawler = Crawler('one')
+
+    def test_no_urls(self):
+        data = tuple()
+        result = self.crawler.generate_site_map(data)
+        expected = """<?xml version="1.0" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>
+"""
+        self.assertEqual(result, expected)
+
+    def test_multiple_urls(self):
+        data = set([
+            ('one', 0.661),
+            ('two', 0.228),
+            ('three', 0.111),
+            ('four', 1),
+        ])
+
+        result = self.crawler.generate_site_map(data)
+        expected = """<?xml version="1.0" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>four</loc>
+        <priority>1.00</priority>
+    </url>
+    <url>
+        <loc>one</loc>
+        <priority>0.66</priority>
+    </url>
+    <url>
+        <loc>two</loc>
+        <priority>0.23</priority>
+    </url>
+    <url>
+        <loc>three</loc>
+        <priority>0.11</priority>
+    </url>
+</urlset>
+"""
+        self.assertEqual(result, expected)
+
 if __name__ == '__main__':
     unittest.main()
